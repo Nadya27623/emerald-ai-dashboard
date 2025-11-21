@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import { LogOut, Plus, Edit, Trash2, X, AlertTriangle, Activity, Users, Pill, Calendar } from 'lucide-react';
+import { User, Calendar, Pill, MessageSquare, LogOut, Users, ClipboardList, Activity, FileText, Plus, Edit, Trash2, Search, Save, X, DollarSign } from 'lucide-react';
 
-export default function App() {
+const KlinikSentosaSystem = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [activeMenu, setActiveMenu] = useState('dashboard');
-  const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState('');
-  const [editingItem, setEditingItem] = useState<any>(null);
 
   const users = [
     { username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator' },
@@ -17,749 +15,1845 @@ export default function App() {
     { username: 'apoteker', password: 'apoteker123', role: 'apoteker', name: 'Apt. John' }
   ];
 
-  const [patients, setPatients] = useState([{ id: 'P001', name: 'Budi Santoso', nik: '717101234567', contact: '08123456', allergy: 'Penisilin' }]);
-  const [visits, setVisits] = useState([{ id: 'V001', patientId: 'P001', patientName: 'Budi Santoso', date: '2025-11-12', queue: 'A001', status: 'Menunggu', complaint: 'Demam', diagnosis: '' }]);
-  const [prescriptions, setPrescriptions] = useState<any[]>([]);
-  const [drugs, setDrugs] = useState([
-    { id: 'D001', name: 'Paracetamol 500mg', stock: 100, price: 5000, expiry: '2026-12-31' },
-    { id: 'D002', name: 'Amoxicillin 500mg', stock: 8, price: 15000, expiry: '2025-12-15' },
-    { id: 'D003', name: 'Vitamin C 1000mg', stock: 200, price: 3000, expiry: '2027-03-20' }
+  const [patients, setPatients] = useState([
+    {
+      id: 'P001',
+      name: 'Budi Santoso',
+      nik: '7171012345678901',
+      dob: '1985-05-15',
+      gender: 'Laki-laki',
+      address: 'Jl. Merdeka No. 10, Manado',
+      contact: '081234567890',
+      allergy: 'Penisilin',
+      medicalHistory: 'Hipertensi'
+    }
   ]);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [schedules, setSchedules] = useState([
-    { id: 'S001', doctor: 'Dr. Sarah', day: 'Senin', start: '08:00', end: '12:00', room: 'R1' },
-    { id: 'S002', doctor: 'Dr. Sarah', day: 'Rabu', start: '13:00', end: '17:00', room: 'R1' }
-  ]);
-  const [logs, setLogs] = useState<any[]>([]);
 
-  const addLog = (act: string, det: string) => setLogs(l => [{ id: l.length + 1, time: new Date().toLocaleString('id-ID'), user: currentUser?.name, act, det }, ...l]);
-  const lowStock = drugs.filter(d => d.stock < 10);
-  const expired = drugs.filter(d => new Date(d.expiry) < new Date());
+  const [visits, setVisits] = useState([
+    {
+      id: 'V001',
+      patientId: 'P001',
+      patientName: 'Budi Santoso',
+      visitDate: '2025-11-12',
+      queueNo: 'A001',
+      status: 'Menunggu',
+      complaint: 'Demam dan batuk',
+      diagnosis: '',
+      notes: ''
+    }
+  ]);
+
+  const [prescriptions, setPrescriptions] = useState([]);
+
+  const [drugs, setDrugs] = useState([
+    { id: 'D001', name: 'Paracetamol 500mg', stock: 100, unitPrice: 5000, expiryDate: '2026-12-31' },
+    { id: 'D002', name: 'Amoxicillin 500mg', stock: 50, unitPrice: 15000, expiryDate: '2026-10-15' },
+    { id: 'D003', name: 'Vitamin C 1000mg', stock: 200, unitPrice: 3000, expiryDate: '2027-03-20' }
+  ]);
+
+  const [complaints, setComplaints] = useState([
+    {
+      id: 'C001',
+      patientId: 'P001',
+      patientName: 'Budi Santoso',
+      content: 'Pelayanan sangat baik dan ramah',
+      status: 'Baru',
+      response: '',
+      date: '2025-11-10'
+    }
+  ]);
+
+  const [transactions, setTransactions] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState('');
+  const [editingItem, setEditingItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const doLogin = () => {
-    const u = users.find(x => x.username === username && x.password === password);
-    if (u) { setCurrentUser(u); setIsLoggedIn(true); } else alert('Login gagal!');
+    const user = users.find(u => u.username === username && u.password === password);
+    
+    if (user) {
+      setCurrentUser(user);
+      setIsLoggedIn(true);
+      setLoginError('');
+      setActiveMenu('dashboard');
+      setUsername('');
+      setPassword('');
+    } else {
+      setLoginError('Username atau password salah!');
+    }
   };
 
-  const closeModal = () => { setShowModal(false); setEditingItem(null); };
-
-  const savePatient = (d: any) => {
-    if (editingItem) setPatients(p => p.map(x => x.id === editingItem.id ? { ...d, id: editingItem.id } : x));
-    else setPatients(p => [...p, { ...d, id: 'P' + String(p.length + 1).padStart(3, '0') }]);
-    addLog('Patient', d.name); closeModal();
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+    setActiveMenu('dashboard');
   };
 
-  const saveVisit = (d: any) => {
-    setVisits(v => [...v, { ...d, id: 'V' + String(v.length + 1).padStart(3, '0'), queue: 'A' + String(v.length + 1).padStart(3, '0'), status: 'Menunggu', diagnosis: '' }]);
-    addLog('Visit', d.patientName); closeModal();
+  const handlePatientSubmit = (formData) => {
+    if (editingItem) {
+      setPatients(prev => prev.map(p => p.id === editingItem.id ? { ...formData, id: editingItem.id } : p));
+      alert('Data pasien berhasil diupdate!');
+    } else {
+      const newId = 'P' + String(patients.length + 1).padStart(3, '0');
+      setPatients(prev => [...prev, { ...formData, id: newId }]);
+      alert('Pasien baru berhasil ditambahkan dengan ID: ' + newId);
+    }
+    setShowModal(false);
+    setEditingItem(null);
   };
 
-  const saveDrug = (d: any) => {
-    if (editingItem) setDrugs(dr => dr.map(x => x.id === editingItem.id ? { ...d, id: editingItem.id } : x));
-    else setDrugs(dr => [...dr, { ...d, id: 'D' + String(dr.length + 1).padStart(3, '0') }]);
-    addLog('Drug', d.name); closeModal();
+  const handleVisitSubmit = (formData) => {
+    if (editingItem) {
+      setVisits(prev => prev.map(v => v.id === editingItem.id ? { ...formData, id: editingItem.id } : v));
+      alert('Data kunjungan berhasil diupdate!');
+    } else {
+      const newId = 'V' + String(visits.length + 1).padStart(3, '0');
+      const queueNo = 'A' + String(visits.filter(v => v.visitDate === formData.visitDate).length + 1).padStart(3, '0');
+      setVisits(prev => [...prev, { ...formData, id: newId, queueNo, status: 'Menunggu' }]);
+      alert('Pasien berhasil didaftarkan! No. Antrian: ' + queueNo);
+    }
+    setShowModal(false);
+    setEditingItem(null);
   };
 
-  const saveSchedule = (d: any) => {
-    if (editingItem) setSchedules(s => s.map(x => x.id === editingItem.id ? { ...d, id: editingItem.id } : x));
-    else setSchedules(s => [...s, { ...d, id: 'S' + String(s.length + 1).padStart(3, '0') }]);
-    addLog('Schedule', d.doctor); closeModal();
+  const handlePrescriptionSubmit = (formData) => {
+    const newId = 'PR' + String(prescriptions.length + 1).padStart(3, '0');
+    setPrescriptions(prev => [...prev, { ...formData, id: newId, date: new Date().toISOString().split('T')[0], status: 'Pending' }]);
+    setVisits(prev => prev.map(v => v.id === formData.visitId ? { ...v, status: 'Selesai Periksa' } : v));
+    alert('Resep berhasil dibuat dengan ID: ' + newId);
+    setShowModal(false);
   };
 
-  const saveRx = (d: any) => {
-    setPrescriptions(p => [...p, { ...d, id: 'PR' + String(p.length + 1).padStart(3, '0'), status: 'Pending' }]);
-    setVisits(v => v.map(x => x.id === d.visitId ? { ...x, status: 'Selesai Periksa' } : x));
-    addLog('Prescription', d.visitId); closeModal();
+  const handleDrugSubmit = (formData) => {
+    if (editingItem) {
+      setDrugs(prev => prev.map(d => d.id === editingItem.id ? { ...formData, id: editingItem.id } : d));
+      alert('Data obat berhasil diupdate!');
+    } else {
+      const newId = 'D' + String(drugs.length + 1).padStart(3, '0');
+      setDrugs(prev => [...prev, { ...formData, id: newId }]);
+      alert('Obat baru berhasil ditambahkan dengan ID: ' + newId);
+    }
+    setShowModal(false);
+    setEditingItem(null);
   };
 
-  const dispense = (pr: any) => {
-    pr.items.forEach((i: any) => setDrugs(d => d.map(x => x.id === i.drugId ? { ...x, stock: x.stock - i.qty } : x)));
-    setPrescriptions(p => p.map(x => x.id === pr.id ? { ...x, status: 'Selesai' } : x));
-    const tot = pr.items.reduce((s: number, i: any) => s + (drugs.find(d => d.id === i.drugId)?.price || 0) * i.qty, 0) + 50000;
-    setTransactions(t => [...t, { id: t.length + 1, amount: tot }]);
-    addLog('Dispense', pr.id); alert('Total: Rp ' + tot.toLocaleString('id-ID'));
+  const handleDispenseDrug = (prescription) => {
+    let canDispense = true;
+    
+    prescription.items.forEach(item => {
+      const drug = drugs.find(d => d.id === item.drugId);
+      if (!drug || drug.stock < item.quantity) {
+        canDispense = false;
+        alert(`Stok ${drug?.name || 'obat'} tidak mencukupi!`);
+      }
+    });
+
+    if (!canDispense) return;
+
+    prescription.items.forEach(item => {
+      setDrugs(prev => prev.map(d => 
+        d.id === item.drugId ? { ...d, stock: d.stock - item.quantity } : d
+      ));
+    });
+
+    setPrescriptions(prev => prev.map(p => 
+      p.id === prescription.id ? { ...p, status: 'Diserahkan' } : p
+    ));
+
+    const totalAmount = prescription.items.reduce((sum, item) => {
+      const drug = drugs.find(d => d.id === item.drugId);
+      return sum + (drug.unitPrice * item.quantity);
+    }, 0) + 50000;
+
+    const newTransaction = {
+      id: 'T' + String(transactions.length + 1).padStart(3, '0'),
+      visitId: prescription.visitId,
+      amount: totalAmount,
+      paymentMethod: 'Tunai',
+      timestamp: new Date().toLocaleString('id-ID'),
+      cashier: currentUser.name
+    };
+
+    setTransactions(prev => [...prev, newTransaction]);
+    alert('Obat berhasil diserahkan dan transaksi dicatat!\nTotal: Rp ' + totalAmount.toLocaleString('id-ID'));
   };
 
-  const pay = (vid: string) => {
-    setTransactions(t => [...t, { id: t.length + 1, amount: 50000 }]);
-    setVisits(v => v.map(x => x.id === vid ? { ...x, status: 'Lunas' } : x));
-    addLog('Payment', vid); alert('Berhasil!');
+  const handlePayment = (visitId, amount, method) => {
+    const newTransaction = {
+      id: 'T' + String(transactions.length + 1).padStart(3, '0'),
+      visitId: visitId,
+      amount: amount,
+      paymentMethod: method,
+      timestamp: new Date().toLocaleString('id-ID'),
+      cashier: currentUser.name
+    };
+
+    setTransactions(prev => [...prev, newTransaction]);
+    setVisits(prev => prev.map(v => 
+      v.id === visitId ? { ...v, status: 'Selesai & Lunas' } : v
+    ));
+    alert('Pembayaran berhasil!\nTotal: Rp ' + amount.toLocaleString('id-ID'));
   };
 
-  const del = (id: string, type: string) => {
-    if (!confirm('Hapus?')) return;
-    if (type === 'patient') setPatients(p => p.filter(x => x.id !== id));
-    if (type === 'drug') setDrugs(d => d.filter(x => x.id !== id));
-    if (type === 'schedule') setSchedules(s => s.filter(x => x.id !== id));
-    addLog('Delete', id);
+  const handleComplaintResponse = (complaintId, response) => {
+    setComplaints(prev => prev.map(c => 
+      c.id === complaintId ? { ...c, response, status: 'Diproses' } : c
+    ));
+    alert('Tanggapan berhasil dikirim!');
   };
 
-  if (!isLoggedIn) return (
-    <div className="min-h-screen bg-cyber-bg flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-neon-green/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-neon-green/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+  const handleDelete = (id, type) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+      if (type === 'patient') setPatients(prev => prev.filter(p => p.id !== id));
+      if (type === 'drug') setDrugs(prev => prev.filter(d => d.id !== id));
+      alert('Data berhasil dihapus!');
+    }
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Activity className="w-10 h-10 text-blue-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-800">Klinik Sentosa</h1>
+            <p className="text-gray-600 mt-2">Sistem Informasi Klinik</p>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && doLogin()}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Masukkan username"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && doLogin()}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Masukkan password"
+              />
+            </div>
+
+            {loginError && (
+              <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm">
+                {loginError}
+              </div>
+            )}
+
+            <button
+              onClick={doLogin}
+              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+            >
+              Login
+            </button>
+
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-600 font-semibold mb-2">Akun Demo:</p>
+              <p className="text-xs text-gray-600">Admin: admin / admin123</p>
+              <p className="text-xs text-gray-600">Dokter: dokter / dokter123</p>
+              <p className="text-xs text-gray-600">Apoteker: apoteker / apoteker123</p>
+            </div>
+          </div>
+        </div>
       </div>
-      
-      <div className="glass-card rounded-2xl p-8 w-full max-w-md backdrop-blur-xl animate-slide-up relative z-10">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neon-green/20 neon-glow-strong mb-4">
-            <Activity className="w-8 h-8 text-neon-green" />
-          </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Klinik Sentosa</h1>
-          <p className="text-muted-foreground text-sm">Sistem Manajemen Klinik Digital</p>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="relative group">
-            <input
-              placeholder="Username"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground group-hover:border-primary/50"
-            />
-          </div>
-          
-          <div className="relative group">
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyPress={e => e.key === 'Enter' && doLogin()}
-              className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground group-hover:border-primary/50"
-            />
-          </div>
-          
-          <button
-            onClick={doLogin}
-            className="w-full bg-gradient-to-r from-primary to-neon-green/80 text-primary-foreground p-3 rounded-xl font-semibold hover:shadow-[0_0_30px_rgba(0,255,136,0.5)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-          >
-            Login
-          </button>
-        </div>
-        
-        <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-border/50">
-          <p className="text-xs text-muted-foreground text-center mb-2 font-medium">Akun Demo:</p>
-          <div className="space-y-1 text-xs text-foreground/70">
-            <p className="font-mono">admin / admin123</p>
-            <p className="font-mono">dokter / dokter123</p>
-            <p className="font-mono">apoteker / apoteker123</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const Btn = ({ m, l, icon: Icon }: any) => (
-    <button
-      onClick={() => setActiveMenu(m)}
-      className={`w-full text-left p-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-3 ${
-        activeMenu === m
-          ? 'bg-primary/20 text-primary border border-primary/50 neon-glow'
-          : 'text-foreground/70 hover:bg-muted/30 hover:text-foreground border border-transparent'
-      }`}
-    >
-      {Icon && <Icon className="w-4 h-4" />}
-      <span className="text-sm">{l}</span>
-    </button>
-  );
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-cyber-bg text-sm">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-neon-dark to-secondary/50 text-foreground p-4 flex justify-between items-center backdrop-blur-sm border-b border-primary/30 neon-glow">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center neon-glow">
-            <Activity className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <span className="font-bold text-lg">Klinik Sentosa</span>
-            <p className="text-xs text-muted-foreground">{currentUser.name} • {currentUser.role}</p>
+    <div className="min-h-screen bg-gray-100">
+      <div className="bg-blue-600 text-white shadow-lg">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <Activity className="w-8 h-8" />
+              <div>
+                <h1 className="text-2xl font-bold">Klinik Sentosa</h1>
+                <p className="text-sm text-blue-100">Sistem Informasi Klinik</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="font-semibold">{currentUser.name}</p>
+                <p className="text-sm text-blue-100 capitalize">{currentUser.role}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg flex items-center gap-2 transition"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
           </div>
         </div>
-        <button
-          onClick={() => setIsLoggedIn(false)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive/20 text-destructive hover:bg-destructive/30 transition-all duration-300 hover:neon-glow border border-destructive/30"
-        >
-          <LogOut className="w-4 h-4" />
-          <span className="text-sm font-medium">Logout</span>
-        </button>
       </div>
 
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-64 glass-sidebar min-h-screen p-4 space-y-2">
-          <div className="mb-6">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Menu Utama</h3>
-          </div>
-          
-          <Btn m="dashboard" l="Dashboard" icon={Activity} />
-          
-          {currentUser.role === 'admin' && (
-            <>
-              <div className="pt-4 pb-2">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Administrasi</h3>
-              </div>
-              <Btn m="patients" l="Pasien" icon={Users} />
-              <Btn m="visits" l="Pendaftaran" icon={Calendar} />
-              <Btn m="payment" l="Pembayaran" icon={Activity} />
-              <Btn m="history" l="Rekam Medis" icon={Activity} />
-              <Btn m="schedules" l="Jadwal" icon={Calendar} />
-              <Btn m="reports" l="Laporan" icon={Activity} />
-              <Btn m="audit" l="Audit Log" icon={Activity} />
-            </>
-          )}
-          
-          {currentUser.role === 'dokter' && (
-            <>
-              <div className="pt-4 pb-2">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dokter</h3>
-              </div>
-              <Btn m="exam" l="Pemeriksaan" icon={Activity} />
-              <Btn m="rx" l="Resep" icon={Pill} />
-              <Btn m="mysch" l="Jadwal Saya" icon={Calendar} />
-            </>
-          )}
-          
-          {currentUser.role === 'apoteker' && (
-            <>
-              <div className="pt-4 pb-2">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Farmasi</h3>
-              </div>
-              <Btn m="apotek" l="Apotek" icon={Pill} />
-              <Btn m="drugs" l="Data Obat" icon={Pill} />
-            </>
-          )}
-        </div>
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-3">
+            <div className="bg-white rounded-lg shadow-lg p-4">
+              <nav className="space-y-2">
+                <button
+                  onClick={() => setActiveMenu('dashboard')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                    activeMenu === 'dashboard' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+                  }`}
+                >
+                  <Activity className="w-5 h-5" />
+                  Dashboard
+                </button>
 
-        {/* Main Content */}
-        <div className="flex-1 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto animate-slide-up">
+                {currentUser.role === 'admin' && (
+                  <>
+                    <button
+                      onClick={() => setActiveMenu('patients')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                        activeMenu === 'patients' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <Users className="w-5 h-5" />
+                      Data Pasien
+                    </button>
+                    <button
+                      onClick={() => setActiveMenu('registration')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                        activeMenu === 'registration' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <ClipboardList className="w-5 h-5" />
+                      Pendaftaran
+                    </button>
+                    <button
+                      onClick={() => setActiveMenu('payment')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                        activeMenu === 'payment' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <DollarSign className="w-5 h-5" />
+                      Pembayaran
+                    </button>
+                    <button
+                      onClick={() => setActiveMenu('complaints')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                        activeMenu === 'complaints' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <MessageSquare className="w-5 h-5" />
+                      Keluhan & Saran
+                    </button>
+                  </>
+                )}
+
+                {currentUser.role === 'dokter' && (
+                  <>
+                    <button
+                      onClick={() => setActiveMenu('examination')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                        activeMenu === 'examination' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <FileText className="w-5 h-5" />
+                      Pemeriksaan
+                    </button>
+                    <button
+                      onClick={() => setActiveMenu('prescriptions')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                        activeMenu === 'prescriptions' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <FileText className="w-5 h-5" />
+                      Resep Obat
+                    </button>
+                  </>
+                )}
+
+                {currentUser.role === 'apoteker' && (
+                  <>
+                    <button
+                      onClick={() => setActiveMenu('pharmacy')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                        activeMenu === 'pharmacy' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <Pill className="w-5 h-5" />
+                      Apotek
+                    </button>
+                    <button
+                      onClick={() => setActiveMenu('drugs')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                        activeMenu === 'drugs' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <Pill className="w-5 h-5" />
+                      Data Obat
+                    </button>
+                  </>
+                )}
+              </nav>
+            </div>
+          </div>
+
+          <div className="col-span-9">
             {activeMenu === 'dashboard' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-foreground">Dashboard</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card t="Total Pasien" v={patients.length} icon={Users} />
-                  <Card t="Kunjungan Hari Ini" v={visits.length} icon={Calendar} />
-                  <Card t="Stok Rendah" v={lowStock.length} c="text-destructive" icon={AlertTriangle} variant="warning" />
-                </div>
-              </div>
+              <Dashboard 
+                role={currentUser.role} 
+                visits={visits} 
+                patients={patients} 
+                prescriptions={prescriptions} 
+                complaints={complaints} 
+                drugs={drugs} 
+                transactions={transactions}
+              />
             )}
-            
             {activeMenu === 'patients' && (
-              <TablePage
-                title="Data Pasien"
-                data={patients}
-                cols={['id', 'name', 'nik']}
-                onAdd={() => { setModalType('patient'); setEditingItem(null); setShowModal(true); }}
-                onEdit={p => { setEditingItem(p); setModalType('patient'); setShowModal(true); }}
-                onDel={id => del(id, 'patient')}
+              <PatientsPage 
+                patients={patients} 
+                setShowModal={setShowModal} 
+                setModalType={setModalType} 
+                setEditingItem={setEditingItem} 
+                handleDelete={handleDelete} 
+                searchTerm={searchTerm} 
+                setSearchTerm={setSearchTerm} 
               />
             )}
-            
-            {activeMenu === 'visits' && (
-              <TablePage
-                title="Pendaftaran Kunjungan"
-                data={visits}
-                cols={['queue', 'patientName', 'complaint', 'status']}
-                onAdd={() => { setModalType('visit'); setShowModal(true); }}
-                onEdit={undefined}
-                onDel={undefined}
+            {activeMenu === 'registration' && (
+              <RegistrationPage 
+                visits={visits} 
+                patients={patients} 
+                setShowModal={setShowModal} 
+                setModalType={setModalType} 
+                setEditingItem={setEditingItem} 
               />
             )}
-            
             {activeMenu === 'payment' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-foreground">Pembayaran</h2>
-                <div className="glass-card rounded-xl p-4 space-y-3">
-                  {visits.filter(v => v.status === 'Selesai Periksa').map(v => (
-                    <div key={v.id} className="flex justify-between items-center bg-muted/30 border border-border/50 p-4 rounded-lg hover:border-primary/50 transition-all">
-                      <div>
-                        <p className="font-semibold text-foreground">{v.patientName}</p>
-                        <p className="text-xs text-muted-foreground">Queue: {v.queue}</p>
-                      </div>
-                      <button
-                        onClick={() => pay(v.id)}
-                        className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium hover:neon-glow-strong transition-all duration-300 hover:scale-105"
-                      >
-                        Bayar
-                      </button>
-                    </div>
-                  ))}
-                  {visits.filter(v => v.status === 'Selesai Periksa').length === 0 && (
-                    <p className="text-muted-foreground text-center py-8">Tidak ada pembayaran pending</p>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {activeMenu === 'history' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-foreground">Rekam Medis</h2>
-                <div className="space-y-4">
-                  {patients.map(p => (
-                    <div key={p.id} className="glass-card rounded-xl p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="font-bold text-lg text-foreground">{p.name}</h3>
-                          <p className="text-sm text-muted-foreground">NIK: {p.nik}</p>
-                        </div>
-                        <span className="px-3 py-1 bg-destructive/20 text-destructive rounded-lg text-xs font-medium border border-destructive/30">
-                          Alergi: {p.allergy || '-'}
-                        </span>
-                      </div>
-                      <div className="space-y-2">
-                        {visits.filter(v => v.patientId === p.id).map(v => (
-                          <div key={v.id} className="bg-muted/30 p-3 rounded-lg border border-border/50 text-xs">
-                            <div className="flex justify-between mb-1">
-                              <span className="text-muted-foreground">{v.date}</span>
-                              <span className="text-primary font-medium">{v.status}</span>
-                            </div>
-                            <p className="text-foreground"><strong>Keluhan:</strong> {v.complaint}</p>
-                            {v.diagnosis && <p className="text-foreground mt-1"><strong>Diagnosis:</strong> {v.diagnosis}</p>}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {activeMenu === 'schedules' && (
-              <TablePage
-                title="Jadwal Dokter"
-                data={schedules}
-                cols={['doctor', 'day', 'start', 'end', 'room']}
-                onAdd={() => { setModalType('schedule'); setEditingItem(null); setShowModal(true); }}
-                onEdit={s => { setEditingItem(s); setModalType('schedule'); setShowModal(true); }}
-                onDel={id => del(id, 'schedule')}
+              <PaymentPage 
+                visits={visits}
+                transactions={transactions}
+                handlePayment={handlePayment}
               />
             )}
-            
-            {activeMenu === 'mysch' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-foreground">Jadwal Saya</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {schedules.filter(s => s.doctor === currentUser.name).map(s => (
-                    <div key={s.id} className="glass-card rounded-xl p-4 hover:neon-glow transition-all">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                          <Calendar className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-foreground">{s.day}</h3>
-                          <p className="text-xs text-muted-foreground">Ruangan {s.room}</p>
-                        </div>
-                      </div>
-                      <p className="text-lg font-semibold text-primary">{s.start} - {s.end}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {activeMenu === 'examination' && (
+              <ExaminationPage 
+                visits={visits} 
+                setVisits={setVisits} 
+                patients={patients} 
+              />
             )}
-            
-            {activeMenu === 'reports' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-foreground">Laporan</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="glass-card rounded-xl p-6 border-l-4 border-yellow-500">
-                    <div className="flex items-center gap-3 mb-2">
-                      <AlertTriangle className="w-6 h-6 text-yellow-500" />
-                      <h3 className="font-semibold text-foreground">Stok Rendah</h3>
-                    </div>
-                    <p className="text-3xl font-bold text-yellow-500">{lowStock.length}</p>
-                    <p className="text-xs text-muted-foreground mt-2">Obat perlu restock</p>
-                  </div>
-                  
-                  <div className="glass-card rounded-xl p-6 border-l-4 border-destructive">
-                    <div className="flex items-center gap-3 mb-2">
-                      <AlertTriangle className="w-6 h-6 text-destructive" />
-                      <h3 className="font-semibold text-foreground">Kadaluarsa</h3>
-                    </div>
-                    <p className="text-3xl font-bold text-destructive">{expired.length}</p>
-                    <p className="text-xs text-muted-foreground mt-2">Obat kadaluarsa</p>
-                  </div>
-                  
-                  <div className="glass-card rounded-xl p-6 border-l-4 border-primary">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Activity className="w-6 h-6 text-primary" />
-                      <h3 className="font-semibold text-foreground">Pendapatan</h3>
-                    </div>
-                    <p className="text-2xl font-bold text-primary">
-                      Rp {transactions.reduce((s, t) => s + t.amount, 0).toLocaleString('id-ID')}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">Total transaksi</p>
-                  </div>
-                </div>
-              </div>
+            {activeMenu === 'prescriptions' && (
+              <PrescriptionsPage 
+                visits={visits} 
+                drugs={drugs} 
+                setShowModal={setShowModal} 
+                setModalType={setModalType} 
+                prescriptions={prescriptions} 
+              />
             )}
-            
-            {activeMenu === 'audit' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-foreground">Audit Log</h2>
-                <div className="glass-card rounded-xl overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-muted/30 border-b border-border">
-                      <tr>
-                        <th className="p-4 text-left font-semibold text-foreground">Waktu</th>
-                        <th className="p-4 text-left font-semibold text-foreground">User</th>
-                        <th className="p-4 text-left font-semibold text-foreground">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {logs.length === 0 ? (
-                        <tr>
-                          <td colSpan={3} className="p-8 text-center text-muted-foreground">
-                            Belum ada aktivitas
-                          </td>
-                        </tr>
-                      ) : (
-                        logs.map(l => (
-                          <tr key={l.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                            <td className="p-4 text-foreground">{l.time}</td>
-                            <td className="p-4 text-foreground">{l.user}</td>
-                            <td className="p-4 text-foreground">
-                              <span className="text-primary font-medium">{l.act}:</span> {l.det}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+            {activeMenu === 'pharmacy' && (
+              <PharmacyPage 
+                prescriptions={prescriptions} 
+                drugs={drugs} 
+                visits={visits}
+                handleDispenseDrug={handleDispenseDrug} 
+              />
             )}
-            
-            {activeMenu === 'exam' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-foreground">Pemeriksaan Pasien</h2>
-                <div className="space-y-4">
-                  {visits.filter(v => v.status === 'Menunggu').map(v => (
-                    <ExamCard key={v.id} v={v} onSave={d => { 
-                      setVisits(vs => vs.map(x => x.id === v.id ? { ...x, diagnosis: d, status: 'Dalam Pemeriksaan' } : x)); 
-                      addLog('Exam', v.id); 
-                    }} />
-                  ))}
-                  {visits.filter(v => v.status === 'Menunggu').length === 0 && (
-                    <div className="glass-card rounded-xl p-8 text-center">
-                      <Activity className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground">Tidak ada pasien menunggu</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {activeMenu === 'rx' && (
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-foreground">Resep</h2>
-                  <button
-                    onClick={() => { setModalType('rx'); setShowModal(true); }}
-                    className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-medium flex items-center gap-2 hover:neon-glow-strong transition-all duration-300 hover:scale-105"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Buat Resep
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  {prescriptions.map(p => (
-                    <div key={p.id} className="glass-card rounded-xl p-4 flex justify-between items-center">
-                      <div>
-                        <p className="font-semibold text-foreground">{p.id}</p>
-                        <p className="text-xs text-muted-foreground">Status: {p.status}</p>
-                      </div>
-                      <span className={`px-3 py-1 rounded-lg text-xs font-medium ${
-                        p.status === 'Pending' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' : 'bg-primary/20 text-primary border border-primary/30'
-                      }`}>
-                        {p.status}
-                      </span>
-                    </div>
-                  ))}
-                  {prescriptions.length === 0 && (
-                    <div className="glass-card rounded-xl p-8 text-center">
-                      <Pill className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground">Belum ada resep</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {activeMenu === 'apotek' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-foreground">Apotek - Penyerahan Obat</h2>
-                <div className="space-y-4">
-                  {prescriptions.filter(p => p.status === 'Pending').map(p => (
-                    <div key={p.id} className="glass-card rounded-xl p-4 flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="font-bold text-lg text-foreground mb-3">{p.id}</p>
-                        <div className="space-y-2">
-                          {p.items?.map((i: any, x: number) => (
-                            <div key={x} className="text-sm bg-muted/30 p-2 rounded-lg border border-border/50">
-                              <span className="text-foreground font-medium">{drugs.find(d => d.id === i.drugId)?.name}</span>
-                              <span className="text-primary ml-2">× {i.qty}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => dispense(p)}
-                        className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-medium hover:neon-glow-strong transition-all duration-300 hover:scale-105 ml-4"
-                      >
-                        Serahkan
-                      </button>
-                    </div>
-                  ))}
-                  {prescriptions.filter(p => p.status === 'Pending').length === 0 && (
-                    <div className="glass-card rounded-xl p-8 text-center">
-                      <Pill className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground">Tidak ada resep pending</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            
             {activeMenu === 'drugs' && (
-              <TablePage
-                title="Data Obat"
-                data={drugs}
-                cols={['name', 'stock', 'price', 'expiry']}
-                onAdd={() => { setModalType('drug'); setEditingItem(null); setShowModal(true); }}
-                onEdit={d => { setEditingItem(d); setModalType('drug'); setShowModal(true); }}
-                onDel={id => del(id, 'drug')}
+              <DrugsPage 
+                drugs={drugs} 
+                setShowModal={setShowModal} 
+                setModalType={setModalType} 
+                setEditingItem={setEditingItem} 
+                handleDelete={handleDelete} 
+              />
+            )}
+            {activeMenu === 'complaints' && (
+              <ComplaintsPage 
+                complaints={complaints} 
+                handleComplaintResponse={handleComplaintResponse} 
               />
             )}
           </div>
         </div>
       </div>
 
-      {showModal && (
-        <Modal
-          type={modalType}
-          item={editingItem}
+      {showModal && modalType === 'patient' && (
+        <PatientModal
+          editingItem={editingItem}
+          onSubmit={handlePatientSubmit}
+          onClose={() => { setShowModal(false); setEditingItem(null); }}
+        />
+      )}
+
+      {showModal && modalType === 'visit' && (
+        <VisitModal
+          editingItem={editingItem}
           patients={patients}
+          onSubmit={handleVisitSubmit}
+          onClose={() => { setShowModal(false); setEditingItem(null); }}
+        />
+      )}
+
+      {showModal && modalType === 'prescription' && (
+        <PrescriptionModal
           visits={visits}
           drugs={drugs}
-          onClose={closeModal}
-          onSave={{ patient: savePatient, visit: saveVisit, drug: saveDrug, schedule: saveSchedule, rx: saveRx }}
+          onSubmit={handlePrescriptionSubmit}
+          onClose={() => { setShowModal(false); }}
+        />
+      )}
+
+      {showModal && modalType === 'drug' && (
+        <DrugModal
+          editingItem={editingItem}
+          onSubmit={handleDrugSubmit}
+          onClose={() => { setShowModal(false); setEditingItem(null); }}
         />
       )}
     </div>
   );
-}
+};
 
-const Card = ({ t, v, c, icon: Icon, variant }: any) => (
-  <div className={`glass-card rounded-xl p-6 transition-all duration-300 hover:neon-glow hover:scale-105 ${variant === 'warning' ? 'border-l-4 border-destructive' : 'border-l-4 border-primary'}`}>
-    <div className="flex items-center justify-between mb-3">
-      <p className="text-sm text-muted-foreground font-medium">{t}</p>
-      {Icon && <Icon className={`w-6 h-6 ${c || 'text-primary'}`} />}
+const Dashboard = ({ role, visits, patients, prescriptions, complaints, drugs, transactions }) => {
+  const todayVisits = visits.filter(v => v.visitDate === new Date().toISOString().split('T')[0]);
+  const todayTransactions = transactions.filter(t => t.timestamp.startsWith(new Date().toLocaleDateString('id-ID')));
+  const todayRevenue = todayTransactions.reduce((sum, t) => sum + t.amount, 0);
+  
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
+      
+      <div className="grid grid-cols-3 gap-6">
+        {role === 'admin' && (
+          <>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">Total Pasien</p>
+                  <p className="text-3xl font-bold text-blue-600">{patients.length}</p>
+                </div>
+                <Users className="w-12 h-12 text-blue-600 opacity-20" />
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">Kunjungan Hari Ini</p>
+                  <p className="text-3xl font-bold text-green-600">{todayVisits.length}</p>
+                </div>
+                <Calendar className="w-12 h-12 text-green-600 opacity-20" />
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">Pendapatan Hari Ini</p>
+                  <p className="text-2xl font-bold text-purple-600">Rp {todayRevenue.toLocaleString('id-ID')}</p>
+                </div>
+                <DollarSign className="w-12 h-12 text-purple-600 opacity-20" />
+              </div>
+            </div>
+          </>
+        )}
+
+        {role === 'dokter' && (
+          <>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">Antrian Hari Ini</p>
+                  <p className="text-3xl font-bold text-blue-600">{todayVisits.length}</p>
+                </div>
+                <ClipboardList className="w-12 h-12 text-blue-600 opacity-20" />
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">Menunggu Periksa</p>
+                  <p className="text-3xl font-bold text-orange-600">{visits.filter(v => v.status === 'Menunggu').length}</p>
+                </div>
+                <Users className="w-12 h-12 text-orange-600 opacity-20" />
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">Selesai Hari Ini</p>
+                  <p className="text-3xl font-bold text-green-600">{todayVisits.filter(v => v.status === 'Selesai Periksa').length}</p>
+                </div>
+                <FileText className="w-12 h-12 text-green-600 opacity-20" />
+              </div>
+            </div>
+          </>
+        )}
+
+        {role === 'apoteker' && (
+          <>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">Total Obat</p>
+                  <p className="text-3xl font-bold text-blue-600">{drugs.length}</p>
+                </div>
+                <Pill className="w-12 h-12 text-blue-600 opacity-20" />
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">Resep Pending</p>
+                  <p className="text-3xl font-bold text-orange-600">{prescriptions.filter(p => p.status === 'Pending').length}</p>
+                </div>
+                <FileText className="w-12 h-12 text-orange-600 opacity-20" />
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">Stok Menipis</p>
+                  <p className="text-3xl font-bold text-red-600">{drugs.filter(d => d.stock < 20).length}</p>
+                </div>
+                <Pill className="w-12 h-12 text-red-600 opacity-20" />
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <h3 className="text-lg font-bold text-gray-800 mb-4">Aktivitas Terkini</h3>
+        <div className="space-y-3">
+          {visits.slice(0, 5).map(visit => (
+            <div key={visit.id} className="flex items-center justify-between py-2 border-b">
+              <div>
+                <p className="font-semibold text-gray-800">{visit.patientName}</p>
+                <p className="text-sm text-gray-600">Antrian: {visit.queueNo}</p>
+              </div>
+              <div className="text-right">
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  visit.status === 'Menunggu' ? 'bg-yellow-100 text-yellow-800' :
+                  visit.status === 'Selesai Periksa' ? 'bg-green-100 text-green-800' :
+                  visit.status === 'Selesai & Lunas' ? 'bg-blue-100 text-blue-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {visit.status}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-    <p className={`text-4xl font-bold ${c || 'text-foreground'}`}>{v}</p>
-  </div>
-);
+  );
+};
 
-const TablePage = ({ title, data, cols, onAdd, onEdit, onDel }: any) => (
-  <div>
-    <div className="flex justify-between items-center mb-6">
-      <h2 className="text-2xl font-bold text-foreground">{title}</h2>
-      {onAdd && (
+const PatientsPage = ({ patients, setShowModal, setModalType, setEditingItem, handleDelete, searchTerm, setSearchTerm }) => {
+  const filteredPatients = patients.filter(p => 
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.nik.includes(searchTerm)
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Data Pasien</h2>
         <button
-          onClick={onAdd}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-xl font-medium flex items-center gap-2 hover:neon-glow-strong transition-all duration-300 hover:scale-105"
+          onClick={() => { setShowModal(true); setModalType('patient'); setEditingItem(null); }}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          Tambah
+          Tambah Pasien
         </button>
-      )}
-    </div>
-    <div className="glass-card rounded-xl overflow-hidden">
-      <table className="w-full">
-        <thead className="bg-muted/30 border-b border-border">
-          <tr>
-            {cols.map((c: string) => (
-              <th key={c} className="p-4 text-left font-semibold text-foreground capitalize">
-                {c}
-              </th>
-            ))}
-            {onEdit && <th className="p-4 text-center font-semibold text-foreground">Aksi</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((d: any) => (
-            <tr key={d.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-              {cols.map((c: string) => (
-                <td key={c} className="p-4 text-foreground">
-                  {typeof d[c] === 'number' && c === 'price'
-                    ? 'Rp ' + d[c].toLocaleString('id-ID')
-                    : d[c]}
-                </td>
-              ))}
-              {onEdit && (
-                <td className="p-4">
-                  <div className="flex gap-2 justify-center">
-                    <button
-                      onClick={() => onEdit(d)}
-                      className="text-primary hover:text-primary/80 transition-colors p-2 hover:bg-primary/10 rounded-lg"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDel(d.id)}
-                      className="text-destructive hover:text-destructive/80 transition-colors p-2 hover:bg-destructive/10 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
-
-const ExamCard = ({ v, onSave }: any) => {
-  const [d, setD] = useState('');
-  return (
-    <div className="glass-card rounded-xl p-4 hover:neon-glow transition-all">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <p className="text-lg font-bold text-foreground">{v.queue} - {v.patientName}</p>
-          <p className="text-sm text-muted-foreground">Keluhan: {v.complaint}</p>
-        </div>
-        <span className="px-3 py-1 bg-primary/20 text-primary rounded-lg text-xs font-medium border border-primary/30">
-          {v.status}
-        </span>
       </div>
-      <input
-        placeholder="Masukkan diagnosis..."
-        value={d}
-        onChange={e => setD(e.target.value)}
-        className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground"
-      />
-      <button
-        onClick={() => onSave(d)}
-        className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-xl font-medium hover:neon-glow-strong transition-all duration-300 hover:scale-[1.02]"
-      >
-        Simpan Diagnosis
-      </button>
+
+      <div className="bg-white rounded-lg shadow-lg p-4">
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Cari nama atau NIK pasien..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nama</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">NIK</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Jenis Kelamin</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kontak</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredPatients.map(patient => (
+                <tr key={patient.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm">{patient.id}</td>
+                  <td className="px-4 py-3 text-sm font-medium">{patient.name}</td>
+                  <td className="px-4 py-3 text-sm">{patient.nik}</td>
+                  <td className="px-4 py-3 text-sm">{patient.gender}</td>
+                  <td className="px-4 py-3 text-sm">{patient.contact}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setEditingItem(patient); setModalType('patient'); setShowModal(true); }}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(patient.id, 'patient')}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
 
-const Modal = ({ type, item, patients, visits, drugs, onClose, onSave }: any) => {
-  const [f, setF] = useState(item || {});
-  const [items, setItems] = useState([{ drugId: '', qty: 1 }]);
-  const set = (k: string, v: any) => setF({ ...f, [k]: v });
+const RegistrationPage = ({ visits, patients, setShowModal, setModalType, setEditingItem }) => {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Pendaftaran Pasien</h2>
+        <button
+          onClick={() => { setShowModal(true); setModalType('visit'); setEditingItem(null); }}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Daftarkan Pasien
+        </button>
+      </div>
 
-  const submit = () => {
-    if (type === 'patient') onSave.patient(f);
-    else if (type === 'visit') onSave.visit(f);
-    else if (type === 'drug') onSave.drug({ ...f, stock: Number(f.stock), price: Number(f.price) });
-    else if (type === 'schedule') onSave.schedule(f);
-    else if (type === 'rx') onSave.rx({ visitId: f.visitId, items });
+      <div className="bg-white rounded-lg shadow-lg p-4">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Daftar Kunjungan Hari Ini</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">No. Antrian</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nama Pasien</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tanggal</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Keluhan</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {visits.map(visit => (
+                <tr key={visit.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm font-bold text-blue-600">{visit.queueNo}</td>
+                  <td className="px-4 py-3 text-sm font-medium">{visit.patientName}</td>
+                  <td className="px-4 py-3 text-sm">{visit.visitDate}</td>
+                  <td className="px-4 py-3 text-sm">{visit.complaint}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      visit.status === 'Menunggu' ? 'bg-yellow-100 text-yellow-800' :
+                      visit.status === 'Selesai Periksa' ? 'bg-green-100 text-green-800' :
+                      visit.status === 'Selesai & Lunas' ? 'bg-blue-100 text-blue-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {visit.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PaymentPage = ({ visits, transactions, handlePayment }) => {
+  const [selectedVisit, setSelectedVisit] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('Tunai');
+  const [amount, setAmount] = useState(50000);
+
+  const unpaidVisits = visits.filter(v => v.status === 'Selesai Periksa');
+
+  const handleSubmitPayment = () => {
+    if (!selectedVisit) {
+      alert('Pilih kunjungan terlebih dahulu!');
+      return;
+    }
+    if (amount <= 0) {
+      alert('Jumlah pembayaran harus lebih dari 0!');
+      return;
+    }
+    handlePayment(selectedVisit.id, amount, paymentMethod);
+    setSelectedVisit(null);
+    setAmount(50000);
   };
 
-  const addItem = () => setItems([...items, { drugId: '', qty: 1 }]);
-  const updateItem = (i: number, k: string, v: any) => setItems(items.map((it, idx) => idx === i ? { ...it, [k]: v } : it));
-
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="glass-card rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto animate-slide-up">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-foreground capitalize">{type}</h3>
-          <button
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition-colors p-2 hover:bg-muted/30 rounded-lg"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-800">Pembayaran</h2>
 
-        <div className="space-y-4">
-          {type === 'patient' && (
-            <>
-              <input placeholder="Nama Lengkap" value={f.name || ''} onChange={e => set('name', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground" />
-              <input placeholder="NIK" value={f.nik || ''} onChange={e => set('nik', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground" />
-              <input placeholder="Kontak" value={f.contact || ''} onChange={e => set('contact', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground" />
-              <input placeholder="Alergi (opsional)" value={f.allergy || ''} onChange={e => set('allergy', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground" />
-            </>
-          )}
-
-          {type === 'visit' && (
-            <>
-              <select value={f.patientId || ''} onChange={e => { set('patientId', e.target.value); set('patientName', patients.find((p: any) => p.id === e.target.value)?.name || ''); }} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all">
-                <option value="">Pilih Pasien</option>
-                {patients.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-              <input type="date" value={f.date || ''} onChange={e => set('date', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
-              <input placeholder="Keluhan" value={f.complaint || ''} onChange={e => set('complaint', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground" />
-            </>
-          )}
-
-          {type === 'drug' && (
-            <>
-              <input placeholder="Nama Obat" value={f.name || ''} onChange={e => set('name', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground" />
-              <input type="number" placeholder="Stok" value={f.stock || ''} onChange={e => set('stock', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground" />
-              <input type="number" placeholder="Harga" value={f.price || ''} onChange={e => set('price', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground" />
-              <input type="date" placeholder="Kadaluarsa" value={f.expiry || ''} onChange={e => set('expiry', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
-            </>
-          )}
-
-          {type === 'schedule' && (
-            <>
-              <input placeholder="Nama Dokter" value={f.doctor || ''} onChange={e => set('doctor', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground" />
-              <select value={f.day || ''} onChange={e => set('day', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all">
-                <option value="">Pilih Hari</option>
-                {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'].map(d => <option key={d}>{d}</option>)}
-              </select>
-              <input type="time" placeholder="Jam Mulai" value={f.start || ''} onChange={e => set('start', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
-              <input type="time" placeholder="Jam Selesai" value={f.end || ''} onChange={e => set('end', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
-              <input placeholder="Ruangan" value={f.room || ''} onChange={e => set('room', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all placeholder:text-muted-foreground" />
-            </>
-          )}
-
-          {type === 'rx' && (
-            <>
-              <select value={f.visitId || ''} onChange={e => set('visitId', e.target.value)} className="w-full bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all">
-                <option value="">Pilih Kunjungan</option>
-                {visits.filter((v: any) => v.status === 'Dalam Pemeriksaan').map((v: any) => <option key={v.id} value={v.id}>{v.queue} - {v.patientName}</option>)}
-              </select>
-              
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-foreground">Obat</label>
-                {items.map((it, i) => (
-                  <div key={i} className="flex gap-2">
-                    <select value={it.drugId} onChange={e => updateItem(i, 'drugId', e.target.value)} className="flex-1 bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all">
-                      <option value="">Pilih Obat</option>
-                      {drugs.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </select>
-                    <input type="number" min="1" value={it.qty} onChange={e => updateItem(i, 'qty', Number(e.target.value))} className="w-20 bg-input/50 border border-border text-foreground p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
+      <div className="grid grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Daftar Kunjungan Belum Lunas</h3>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {unpaidVisits.map(visit => (
+              <div
+                key={visit.id}
+                onClick={() => {
+                  setSelectedVisit(visit);
+                  setAmount(50000);
+                }}
+                className={`p-4 border rounded-lg cursor-pointer transition ${
+                  selectedVisit?.id === visit.id 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-200 hover:border-blue-300'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-bold text-lg text-blue-600">{visit.queueNo}</p>
+                    <p className="font-semibold text-gray-800">{visit.patientName}</p>
+                    <p className="text-sm text-gray-600 mt-1">Tanggal: {visit.visitDate}</p>
                   </div>
-                ))}
-                <button onClick={addItem} className="w-full bg-muted/30 text-foreground px-4 py-2 rounded-xl font-medium hover:bg-muted/50 transition-all flex items-center justify-center gap-2 border border-border/50">
-                  <Plus className="w-4 h-4" />
-                  Tambah Obat
-                </button>
+                </div>
               </div>
-            </>
-          )}
+            ))}
+            {unpaidVisits.length === 0 && (
+              <p className="text-center text-gray-500 py-8">Tidak ada kunjungan yang perlu dibayar</p>
+            )}
+          </div>
         </div>
 
-        <button
-          onClick={submit}
-          className="w-full mt-6 bg-gradient-to-r from-primary to-neon-green/80 text-primary-foreground p-3 rounded-xl font-semibold hover:neon-glow-strong transition-all duration-300 hover:scale-[1.02]"
-        >
-          Simpan
-        </button>
+        <div className="bg-white rounded-lg shadow-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Form Pembayaran</h3>
+          {selectedVisit ? (
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600">Pasien</p>
+                <p className="font-bold text-lg">{selectedVisit.patientName}</p>
+                <p className="text-sm text-gray-600 mt-2">No. Antrian: {selectedVisit.queueNo}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Jumlah Pembayaran (Rp)</label>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  min="0"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Metode Pembayaran</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Tunai">Tunai</option>
+                  <option value="Debit">Kartu Debit</option>
+                  <option value="Kredit">Kartu Kredit</option>
+                  <option value="Transfer">Transfer Bank</option>
+                </select>
+              </div>
+
+              <button
+                onClick={handleSubmitPayment}
+                className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
+              >
+                <DollarSign className="w-4 h-4" />
+                Proses Pembayaran
+              </button>
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 py-12">
+              <DollarSign className="w-16 h-16 mx-auto mb-4 opacity-20" />
+              <p>Pilih kunjungan dari daftar untuk memproses pembayaran</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-lg p-4">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Riwayat Transaksi Hari Ini</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID Transaksi</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Waktu</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Jumlah</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Metode</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kasir</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {transactions.map(transaction => (
+                <tr key={transaction.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm">{transaction.id}</td>
+                  <td className="px-4 py-3 text-sm">{transaction.timestamp}</td>
+                  <td className="px-4 py-3 text-sm font-semibold text-green-600">Rp {transaction.amount.toLocaleString('id-ID')}</td>
+                  <td className="px-4 py-3 text-sm">{transaction.paymentMethod}</td>
+                  <td className="px-4 py-3 text-sm">{transaction.cashier}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
 };
+
+const ExaminationPage = ({ visits, setVisits, patients }) => {
+  const [selectedVisit, setSelectedVisit] = useState(null);
+  const [diagnosis, setDiagnosis] = useState('');
+  const [notes, setNotes] = useState('');
+
+  const handleSaveExamination = () => {
+    if (selectedVisit) {
+      const updatedVisits = visits.map(v => 
+        v.id === selectedVisit.id 
+          ? { ...v, diagnosis, notes, status: 'Dalam Pemeriksaan' }
+          : v
+      );
+      setVisits(updatedVisits);
+      setSelectedVisit({...selectedVisit, diagnosis, notes, status: 'Dalam Pemeriksaan'});
+      alert('Catatan pemeriksaan berhasil disimpan!');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-800">Pemeriksaan Pasien</h2>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Daftar Antrian</h3>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {visits.filter(v => v.status === 'Menunggu' || v.status === 'Dalam Pemeriksaan').map(visit => (
+              <div
+                key={visit.id}
+                onClick={() => {
+                  setSelectedVisit(visit);
+                  setDiagnosis(visit.diagnosis || '');
+                  setNotes(visit.notes || '');
+                }}
+                className={`p-4 border rounded-lg cursor-pointer transition ${
+                  selectedVisit?.id === visit.id 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-200 hover:border-blue-300'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-bold text-lg text-blue-600">{visit.queueNo}</p>
+                    <p className="font-semibold text-gray-800">{visit.patientName}</p>
+                    <p className="text-sm text-gray-600 mt-1">Keluhan: {visit.complaint}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                    visit.status === 'Menunggu' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {visit.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Catatan Pemeriksaan</h3>
+          {selectedVisit ? (
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600">Pasien</p>
+                <p className="font-bold text-lg">{selectedVisit.patientName}</p>
+                <p className="text-sm text-gray-600 mt-2">No. Antrian: {selectedVisit.queueNo}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Diagnosis</label>
+                <input
+                  type="text"
+                  value={diagnosis}
+                  onChange={(e) => setDiagnosis(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Masukkan diagnosis..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Catatan Pemeriksaan</label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={6}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Masukkan catatan pemeriksaan..."
+                />
+              </div>
+
+              <button
+                onClick={handleSaveExamination}
+                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                Simpan Catatan
+              </button>
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 py-12">
+              <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
+              <p>Pilih pasien dari daftar antrian untuk memulai pemeriksaan</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PrescriptionsPage = ({ visits, drugs, setShowModal, setModalType, prescriptions }) => {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Pembuatan Resep</h2>
+        <button
+          onClick={() => { setShowModal(true); setModalType('prescription'); }}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Buat Resep
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-lg p-4">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Daftar Resep</h3>
+        <div className="space-y-4">
+          {prescriptions.map(prescription => {
+            const visit = visits.find(v => v.id === prescription.visitId);
+            return (
+              <div key={prescription.id} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <p className="font-bold text-gray-800">ID Resep: {prescription.id}</p>
+                    <p className="text-sm text-gray-600">Pasien: {visit?.patientName}</p>
+                    <p className="text-sm text-gray-600">Tanggal: {prescription.date}</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    prescription.status === 'Diserahkan' ? 'bg-green-100 text-green-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {prescription.status || 'Pending'}
+                  </span>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="font-semibold text-sm text-gray-700 mb-2">Item Obat:</p>
+                  {prescription.items.map((item, idx) => {
+                    const drug = drugs.find(d => d.id === item.drugId);
+                    return (
+                      <div key={idx} className="text-sm text-gray-600">
+                        • {drug?.name} - {item.quantity} - {item.dose} - {item.instruction}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PharmacyPage = ({ prescriptions, drugs, visits, handleDispenseDrug }) => {
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-800">Penebusan Obat</h2>
+
+      <div className="bg-white rounded-lg shadow-lg p-4">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Daftar Resep Pending</h3>
+        <div className="space-y-4">
+          {prescriptions.filter(p => p.status === 'Pending').map(prescription => {
+            const visit = visits.find(v => v.id === prescription.visitId);
+            return (
+              <div key={prescription.id} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <p className="font-bold text-gray-800">ID Resep: {prescription.id}</p>
+                    <p className="text-sm text-gray-600">Pasien: {visit?.patientName}</p>
+                    <p className="text-sm text-gray-600">Tanggal: {prescription.date}</p>
+                  </div>
+                </div>
+                <div className="bg-gray-50 p-3 rounded mb-3">
+                  <p className="font-semibold text-sm text-gray-700 mb-2">Item Obat:</p>
+                  {prescription.items.map((item, idx) => {
+                    const drug = drugs.find(d => d.id === item.drugId);
+                    return (
+                      <div key={idx} className="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>• {drug?.name} - {item.quantity} - {item.dose}</span>
+                        <span className="font-semibold">Stok: {drug?.stock}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={() => handleDispenseDrug(prescription)}
+                  className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+                >
+                  Serahkan Obat
+                </button>
+              </div>
+            );
+          })}
+          {prescriptions.filter(p => p.status === 'Pending').length === 0 && (
+            <p className="text-center text-gray-500 py-8">Tidak ada resep yang perlu diproses</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DrugsPage = ({ drugs, setShowModal, setModalType, setEditingItem, handleDelete }) => {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Data Obat</h2>
+        <button
+          onClick={() => { setShowModal(true); setModalType('drug'); setEditingItem(null); }}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Tambah Obat
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-lg p-4">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nama Obat</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Stok</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Harga</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kadaluarsa</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {drugs.map(drug => (
+                <tr key={drug.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm">{drug.id}</td>
+                  <td className="px-4 py-3 text-sm font-medium">{drug.name}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <span className={`font-semibold ${drug.stock < 20 ? 'text-red-600' : 'text-green-600'}`}>
+                      {drug.stock}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm">Rp {drug.unitPrice.toLocaleString('id-ID')}</td>
+                  <td className="px-4 py-3 text-sm">{drug.expiryDate}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setEditingItem(drug); setModalType('drug'); setShowModal(true); }}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(drug.id, 'drug')}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ComplaintsPage = ({ complaints, handleComplaintResponse }) => {
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [response, setResponse] = useState('');
+
+  const handleSubmitResponse = (complaintId) => {
+    if (response.trim()) {
+      handleComplaintResponse(complaintId, response);
+      setResponse('');
+      setSelectedComplaint(null);
+    } else {
+      alert('Harap isi tanggapan terlebih dahulu!');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-800">Keluhan & Saran</h2>
+
+      <div className="bg-white rounded-lg shadow-lg p-4">
+        <div className="space-y-4">
+          {complaints.map(complaint => (
+            <div key={complaint.id} className="border border-gray-200 rounded-lg p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <p className="font-bold text-gray-800">{complaint.patientName}</p>
+                  <p className="text-sm text-gray-600">Tanggal: {complaint.date}</p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  complaint.status === 'Baru' ? 'bg-yellow-100 text-yellow-800' :
+                  complaint.status === 'Diproses' ? 'bg-blue-100 text-blue-800' :
+                  'bg-green-100 text-green-800'
+                }`}>
+                  {complaint.status}
+                </span>
+              </div>
+              <div className="bg-gray-50 p-3 rounded mb-3">
+                <p className="text-sm text-gray-700">{complaint.content}</p>
+              </div>
+              {complaint.response && (
+                <div className="bg-blue-50 p-3 rounded mb-3">
+                  <p className="text-xs font-semibold text-blue-800 mb-1">Tanggapan:</p>
+                  <p className="text-sm text-blue-900">{complaint.response}</p>
+                </div>
+              )}
+              {complaint.status === 'Baru' && (
+                <div className="space-y-2">
+                  <textarea
+                    value={selectedComplaint === complaint.id ? response : ''}
+                    onChange={(e) => {
+                      setSelectedComplaint(complaint.id);
+                      setResponse(e.target.value);
+                    }}
+                    placeholder="Tulis tanggapan..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <button
+                    onClick={() => handleSubmitResponse(complaint.id)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
+                  >
+                    Kirim Tanggapan
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PatientModal = ({ editingItem, onSubmit, onClose }) => {
+  const [formData, setFormData] = useState(editingItem || {
+    name: '',
+    nik: '',
+    dob: '',
+    gender: 'Laki-laki',
+    address: '',
+    contact: '',
+    allergy: '',
+    medicalHistory: ''
+  });
+
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
+    
+    if (!formData.name || !formData.nik || !formData.dob || !formData.address || !formData.contact) {
+      alert('Harap isi semua field yang wajib (*)');
+      return;
+    }
+    
+    console.log('Submitting patient:', formData);
+    onSubmit(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-800">
+              {editingItem ? 'Edit Pasien' : 'Tambah Pasien Baru'}
+            </h3>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap *</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">NIK *</label>
+                <input
+                  type="text"
+                  value={formData.nik}
+                  onChange={(e) => setFormData(prev => ({...prev, nik: e.target.value}))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Lahir *</label>
+                <input
+                  type="date"
+                  value={formData.dob}
+                  onChange={(e) => setFormData(prev => ({...prev, dob: e.target.value}))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Jenis Kelamin *</label>
+                <select
+                  value={formData.gender}
+                  onChange={(e) => setFormData(prev => ({...prev, gender: e.target.value}))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option>Laki-laki</option>
+                  <option>Perempuan</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Alamat *</label>
+              <textarea
+                value={formData.address}
+                onChange={(e) => setFormData(prev => ({...prev, address: e.target.value}))}
+                rows={2}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Kontak *</label>
+              <input
+                type="text"
+                value={formData.contact}
+                onChange={(e) => setFormData(prev => ({...prev, contact: e.target.value}))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Alergi</label>
+              <input
+                type="text"
+                value={formData.allergy}
+                onChange={(e) => setFormData(prev => ({...prev, allergy: e.target.value}))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Contoh: Penisilin, Seafood"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Riwayat Kesehatan</label>
+              <textarea
+                value={formData.medicalHistory}
+                onChange={(e) => setFormData(prev => ({...prev, medicalHistory: e.target.value}))}
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Contoh: Hipertensi, Diabetes"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="submit"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }}
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium"
+              >
+                Simpan
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 font-medium"
+              >
+                Batal
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const VisitModal = ({ editingItem, patients, onSubmit, onClose }) => {
+  const [formData, setFormData] = useState(editingItem || {
+    patientId: '',
+    patientName: '',
+    visitDate: new Date().toISOString().split('T')[0],
+    complaint: ''
+  });
+
+  const handlePatientChange = (patientId) => {
+    const patient = patients.find(p => p.id === patientId);
+    setFormData(prev => ({
+      ...prev,
+      patientId,
+      patientName: patient?.name || ''
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
+    
+    if (!formData.patientId || !formData.complaint) {
+      alert('Harap pilih pasien dan isi keluhan!');
+      return;
+    }
+    
+    console.log('Submitting visit:', formData);
+    onSubmit(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-800">Pendaftaran Kunjungan</h3>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Pasien *</label>
+              <select
+                value={formData.patientId}
+                onChange={(e) => handlePatientChange(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">-- Pilih Pasien --</option>
+                {patients.map(patient => (
+                  <option key={patient.id} value={patient.id}>
+                    {patient.name} - {patient.nik}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Kunjungan *</label>
+              <input
+                type="date"
+                value={formData.visitDate}
+                onChange={(e) => setFormData(prev => ({...prev, visitDate: e.target.value}))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Keluhan *</label>
+              <textarea
+                value={formData.complaint}
+                onChange={(e) => setFormData(prev => ({...prev, complaint: e.target.value}))}
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Jelaskan keluhan pasien..."
+                required
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="submit"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }}
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium"
+              >
+                Daftarkan
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 font-medium"
+              >
+                Batal
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PrescriptionModal = ({ visits, drugs, onSubmit, onClose }) => {
+  const [formData, setFormData] = useState({
+    visitId: '',
+    items: [{ drugId: '', dose: '', quantity: 1, instruction: '' }]
+  });
+
+  const handleAddItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, { drugId: '', dose: '', quantity: 1, instruction: '' }]
+    }));
+  };
+
+  const handleRemoveItem = (index) => {
+    if (formData.items.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        items: prev.items.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
+  const handleItemChange = (index, field, value) => {
+    setFormData(prev => {
+      const newItems = [...prev.items];
+      newItems[index] = {...newItems[index], [field]: value};
+      return {...prev, items: newItems};
+    });
+  };
+
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
+    
+    if (!formData.visitId) {
+      alert('Harap pilih kunjungan pasien!');
+      return;
+    }
+    
+    const isValid = formData.items.every(item => 
+      item.drugId && item.dose && item.quantity > 0 && item.instruction
+    );
+    
+    if (!isValid) {
+      alert('Harap lengkapi semua item obat!');
+      return;
+    }
+    
+    console.log('Submitting prescription:', formData);
+    onSubmit(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-800">Buat Resep Obat</h3>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Kunjungan Pasien *</label>
+              <select
+                value={formData.visitId}
+                onChange={(e) => setFormData(prev => ({...prev, visitId: e.target.value}))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">-- Pilih Pasien --</option>
+                {visits.filter(v => v.status === 'Dalam Pemeriksaan' || v.status === 'Selesai Periksa').map(visit => (
+                  <option key={visit.id} value={visit.id}>
+                    {visit.patientName} - {visit.queueNo} ({visit.visitDate})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="font-semibold text-gray-800">Item Obat</h4>
+                <button
+                  type="button"
+                  onClick={handleAddItem}
+                  className="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Tambah Item
+                </button>
+              </div>
+
+              {formData.items.map((item, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-lg mb-3">
+                  <div className="flex justify-between items-center mb-3">
+                    <h5 className="font-semibold text-sm text-gray-700">Item #{index + 1}</h5>
+                    {formData.items.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(index)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Obat *</label>
+                      <select
+                        value={item.drugId}
+                        onChange={(e) => handleItemChange(index, 'drugId', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                        required
+                      >
+                        <option value="">-- Pilih Obat --</option>
+                        {drugs.map(drug => (
+                          <option key={drug.id} value={drug.id}>
+                            {drug.name} (Stok: {drug.stock})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Dosis *</label>
+                      <input
+                        type="text"
+                        value={item.dose}
+                        onChange={(e) => handleItemChange(index, 'dose', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                        placeholder="Contoh: 3x sehari"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Jumlah *</label>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                        min="1"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Instruksi *</label>
+                      <input
+                        type="text"
+                        value={item.instruction}
+                        onChange={(e) => handleItemChange(index, 'instruction', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                        placeholder="Contoh: Sesudah makan"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="submit"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }}
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium"
+              >
+                Buat Resep
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 font-medium"
+              >
+                Batal
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DrugModal = ({ editingItem, onSubmit, onClose }) => {
+  const [formData, setFormData] = useState(editingItem || {
+    name: '',
+    stock: 0,
+    unitPrice: 0,
+    expiryDate: ''
+  });
+
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
+    
+    if (!formData.name || !formData.expiryDate) {
+      alert('Harap isi nama obat dan tanggal kadaluarsa!');
+      return;
+    }
+    
+    if (parseInt(formData.stock) < 0 || parseInt(formData.unitPrice) < 0) {
+      alert('Stok dan harga tidak boleh negatif!');
+      return;
+    }
+    
+    console.log('Submitting drug:', formData);
+    onSubmit({
+      ...formData,
+      stock: parseInt(formData.stock),
+      unitPrice: parseInt(formData.unitPrice)
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-800">
+              {editingItem ? 'Edit Obat' : 'Tambah Obat Baru'}
+            </h3>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nama Obat *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Contoh: Paracetamol 500mg"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Stok *</label>
+                <input
+                  type="number"
+                  value={formData.stock}
+                  onChange={(e) => setFormData(prev => ({...prev, stock: e.target.value}))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  min="0"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Harga Satuan *</label>
+                <input
+                  type="number"
+                  value={formData.unitPrice}
+                  onChange={(e) => setFormData(prev => ({...prev, unitPrice: e.target.value}))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  min="0"
+                  placeholder="Dalam Rupiah"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Kadaluarsa *</label>
+              <input
+                type="date"
+                value={formData.expiryDate}
+                onChange={(e) => setFormData(prev => ({...prev, expiryDate: e.target.value}))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="submit"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }}
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium"
+              >
+                {editingItem ? 'Update' : 'Simpan'}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 font-medium"
+              >
+                Batal
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default KlinikSentosaSystem;
